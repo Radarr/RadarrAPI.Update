@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
+using Octokit;
 
 namespace RadarrAPI
 {
@@ -16,26 +16,40 @@ namespace RadarrAPI
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
+                .AddJsonFile("appsettings.json", true, true)
                 .AddEnvironmentVariables();
+
             Configuration = builder.Build();
+
+            // Check config
+            if (string.IsNullOrWhiteSpace(Configuration["DataDirectory"]))
+                throw new Exception("DataDirectory was not set in the Configuration.");
+
+            // Check data path
+            if (!Path.IsPathRooted(Configuration["DataDirectory"]))
+            {
+                Configuration["DataDirectory"] = Path.GetFullPath(Configuration["DataDirectory"]);
+            }
+
+            // Create
+            Directory.CreateDirectory(Configuration["DataDirectory"]);
         }
 
         public IConfigurationRoot Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // Add framework services.
+            services.Configure<Config>(Configuration);
+            services.AddMemoryCache();
+            services.AddSingleton(new GitHubClient(new ProductHeaderValue("RadarrAPI")));
             services.AddMvc();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
+            loggerFactory.AddNLog();
+            
+            env.ConfigureNLog("nlog.config");
 
             app.UseMvc();
         }
