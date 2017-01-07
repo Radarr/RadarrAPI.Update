@@ -1,4 +1,6 @@
-﻿namespace RadarrAPI.Update.Data
+﻿using Newtonsoft.Json;
+
+namespace RadarrAPI.Update.Data
 {
     public class UpdatePackageContainer
     {
@@ -9,6 +11,7 @@
         /// </summary>
         public bool Available { get; set; }
 
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public UpdatePackage UpdatePackage { get; set; }
 
     }

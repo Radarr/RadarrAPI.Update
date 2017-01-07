@@ -17,6 +17,7 @@ namespace RadarrAPI.Update.Data
 
         public string Url { get; set; }
 
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public UpdateChanges Changes { get; set; }
 
         /// <summary>
