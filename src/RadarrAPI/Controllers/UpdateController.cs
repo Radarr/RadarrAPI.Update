@@ -92,13 +92,13 @@ namespace RadarrAPI.Controllers
                 switch (os)
                 {
                     case OperatingSystem.Windows:
-                        releaseAsset = release.Assets.FirstOrDefault(a => a.Name.StartsWith("Radarr_Windows"));
+                        releaseAsset = release.Assets.FirstOrDefault(a => a.Name.ToLower().Contains("windows."));
                         break;
                     case OperatingSystem.Linux:
-                        releaseAsset = release.Assets.FirstOrDefault(a => a.Name.StartsWith("Radarr_Mono"));
+                        releaseAsset = release.Assets.FirstOrDefault(a => a.Name.ToLower().Contains("linux."));
                         break;
                     case OperatingSystem.Osx:
-                        releaseAsset = release.Assets.FirstOrDefault(a => a.Name.StartsWith("Radarr_OSX"));
+                        releaseAsset = release.Assets.FirstOrDefault(a => a.Name.ToLower().Contains("osx."));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
