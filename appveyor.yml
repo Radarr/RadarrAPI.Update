@@ -20,3 +20,7 @@ build_script:
 
 cache:
   - '%USERPROFILE%\.nuget\packages'
+  
+only_commits:
+  files:
+    - src/
