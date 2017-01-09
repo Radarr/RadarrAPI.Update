@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Octokit;
+using RadarrAPI.Database.Models;
 using RadarrAPI.Extensions;
 using RadarrAPI.Update;
 using RadarrAPI.Update.Data;

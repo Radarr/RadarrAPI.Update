@@ -5,10 +5,12 @@ namespace RadarrAPI.Database
 {
     public class DatabaseContext : DbContext
     {
+
         public DatabaseContext(DbContextOptions options) : base(options)
         {
         }
 
-        public DbSet<Release> Releases { get; set; }
+        public DbSet<UpdatePackage> UpdatePackages { get; set; }
+
     }
 }

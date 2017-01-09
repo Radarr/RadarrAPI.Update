@@ -1,14 +1,29 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace RadarrAPI.Update.Data
+namespace RadarrAPI.Database.Models
 {
     public class UpdatePackage
     {
 
+        [JsonIgnore]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
+        public int UpdatePackageId { get; set; }
+
         [JsonConverter(typeof(VersionConverter))]
+        [NotMapped]
         public Version Version { get; set; }
+        
+        [JsonIgnore]
+        public string VersionStr
+        {
+            get { return JsonConvert.SerializeObject(Version, new VersionConverter()); }
+            set { Version = JsonConvert.DeserializeObject<Version>(value, new VersionConverter()); }
+        }
 
         [JsonConverter(typeof(IsoDateTimeConverter))]
         public DateTime ReleaseDate { get; set; }

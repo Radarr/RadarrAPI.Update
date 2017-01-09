@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using RadarrAPI.Database.Models;
 
 namespace RadarrAPI.Update.Data
 {
