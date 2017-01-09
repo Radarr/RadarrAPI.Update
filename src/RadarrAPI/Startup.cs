@@ -2,11 +2,14 @@
 using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using Octokit;
+using RadarrAPI.Database;
 
 namespace RadarrAPI
 {
@@ -17,18 +20,15 @@ namespace RadarrAPI
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", true, true)
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true, true)
                 .AddEnvironmentVariables();
 
             Configuration = builder.Build();
-
-            // Check config
-            if (string.IsNullOrWhiteSpace(Configuration["DataDirectory"]))
-                throw new Exception("DataDirectory was not set in the Configuration.");
-
+            
             // Check data path
             if (!Path.IsPathRooted(Configuration["DataDirectory"]))
             {
-                Configuration["DataDirectory"] = Path.GetFullPath(Configuration["DataDirectory"]);
+                throw new Exception("DataDirectory path must be absolute.");
             }
 
             // Create
@@ -40,9 +40,17 @@ namespace RadarrAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<Config>(Configuration);
-            services.AddMemoryCache();
             services.AddSingleton(new GitHubClient(new ProductHeaderValue("RadarrAPI")));
             services.AddMvc();
+
+            // Add database
+            var sqlite = new SqliteConnectionStringBuilder
+            {
+                DataSource = Path.Combine(Configuration["DataDirectory"], "radarrapi.db"),
+                Mode = SqliteOpenMode.ReadWriteCreate
+            };
+            
+            services.AddDbContext<DatabaseContext>(o => o.UseSqlite(sqlite.ConnectionString));
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
