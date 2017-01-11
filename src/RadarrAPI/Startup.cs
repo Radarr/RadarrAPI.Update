@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using Octokit;
 using RadarrAPI.Database;
+using RadarrAPI.Release;
 
 namespace RadarrAPI
 {
@@ -41,6 +42,7 @@ namespace RadarrAPI
         {
             services.Configure<Config>(Configuration);
             services.AddSingleton(new GitHubClient(new ProductHeaderValue("RadarrAPI")));
+            services.AddSingleton(new ReleaseService());
             services.AddMvc();
 
             // Add database
