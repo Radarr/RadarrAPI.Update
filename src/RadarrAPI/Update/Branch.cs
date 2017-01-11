@@ -1,7 +1,7 @@
 ﻿namespace RadarrAPI.Update
 {
     /// <summary>
-    ///     Contains all git branches of Radarr
+    ///     Contains all update branches of Radarr
     ///     which can have releases.
     /// </summary>
     public enum Branch

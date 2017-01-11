@@ -4,6 +4,10 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace RadarrAPI.Extensions
 {
+    /// <summary>
+    ///     This class contains <see cref="MemoryCache"/> extensions
+    ///     to simplify using a cache.
+    /// </summary>
     public static class MemoryCacheExtensions
     {
 
