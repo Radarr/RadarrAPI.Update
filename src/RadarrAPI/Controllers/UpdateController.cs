@@ -73,7 +73,7 @@ namespace RadarrAPI.Controllers
                 };
             }
 
-            var releases = await _memoryCache.GetValueAsync("github-radarr", async () => await _gitHubClient.Repository.Release.GetAll("galli-leo", "radarr"), TimeSpan.FromMinutes(5));
+            var releases = await _memoryCache.GetValueAsync("github-radarr", async () => await _gitHubClient.Repository.Release.GetAll("radarr", "radarr"), TimeSpan.FromMinutes(5));
             var validReleases = releases.Where(r =>
                 r.TagName.StartsWith("v") &&
                 VersionUtil.IsValid(r.TagName.Substring(1)) &&
@@ -207,7 +207,7 @@ namespace RadarrAPI.Controllers
                 };
             }
 
-            var releases = await _gitHubClient.Repository.Release.GetAll("galli-leo", "radarr");
+            var releases = await _gitHubClient.Repository.Release.GetAll("radarr", "radarr");
             var release = releases.FirstOrDefault(r =>
                 r.TagName.StartsWith("v") && 
                 VersionUtil.IsValid(r.TagName.Substring(1)) &&
