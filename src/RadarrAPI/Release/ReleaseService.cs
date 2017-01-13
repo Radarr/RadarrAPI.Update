@@ -11,15 +11,12 @@ namespace RadarrAPI.Release
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-        private readonly IServiceProvider _serviceProvider;
-
         private readonly ConcurrentDictionary<Branch, ReleaseSourceBase> _releaseBranches;
 
         public ReleaseService(IServiceProvider serviceProvider)
         {
-            _serviceProvider = serviceProvider;
             _releaseBranches = new ConcurrentDictionary<Branch, ReleaseSourceBase>();
-            _releaseBranches.TryAdd(Branch.Develop, new GithubReleaseSource(_serviceProvider, Branch.Develop));
+            _releaseBranches.TryAdd(Branch.Develop, new GithubReleaseSource(serviceProvider, Branch.Develop));
         }
 
         public void UpdateReleases(Branch branch)
