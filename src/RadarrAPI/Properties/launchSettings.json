@@ -19,7 +19,7 @@
     "RadarrAPI": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "http://localhost:5000/v1/webhook/github?branch=develop",
+      "launchUrl": "http://localhost:5000/v1/update/develop/changes?version=0.2.0.0&os=windows",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

@@ -11,12 +11,15 @@ namespace RadarrAPI.Release
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
+        private readonly IServiceProvider _serviceProvider;
+
         private readonly ConcurrentDictionary<Branch, ReleaseSourceBase> _releaseBranches;
 
-        public ReleaseService()
+        public ReleaseService(IServiceProvider serviceProvider)
         {
+            _serviceProvider = serviceProvider;
             _releaseBranches = new ConcurrentDictionary<Branch, ReleaseSourceBase>();
-            _releaseBranches.TryAdd(Branch.Develop, new GithubReleaseSource(Branch.Develop));
+            _releaseBranches.TryAdd(Branch.Develop, new GithubReleaseSource(_serviceProvider, Branch.Develop));
         }
 
         public void UpdateReleases(Branch branch)
@@ -28,14 +31,17 @@ namespace RadarrAPI.Release
                 throw new NotImplementedException($"{branch} does not have a release source.");
             }
 
-            Logger.Warn("-- Task started");
-
             Task.Factory.StartNew(async () =>
             {
-                await releaseSourceBase.StartFetchReleasesAsync();
+                try
+                {
+                    await releaseSourceBase.StartFetchReleasesAsync();
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e, $"UpdateReleases({branch}) threw an exception");
+                }
             });
-
-            Logger.Warn("-- Task ended");
         }
     }
 }

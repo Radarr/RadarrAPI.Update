@@ -7,8 +7,8 @@
     public enum Branch
     {
 
-        Master,
-        Develop
+        Master = 0,
+        Develop = 1
 
     }
 }

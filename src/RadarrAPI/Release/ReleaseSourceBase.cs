@@ -1,38 +1,56 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using NLog;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using RadarrAPI.Update;
 
 namespace RadarrAPI.Release
 {
     public abstract class ReleaseSourceBase
     {
-        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+        /// <summary>
+        ///     Used to have only one thread fetch releases.
+        /// </summary>
+        private readonly Semaphore _fetchSemaphore;
 
-        private readonly Mutex _fetchMutex;
-
-        protected ReleaseSourceBase(Branch branch)
+        protected ReleaseSourceBase(IServiceProvider serviceProvider, Branch branch)
         {
-            Branch = branch;
-
-            _fetchMutex = new Mutex();
+            ServiceProvider = serviceProvider;
+            ReleaseBranch = branch;
+            Config = ServiceProvider.GetService<IOptions<Config>>().Value;
+            
+            _fetchSemaphore = new Semaphore(1, 1);
         }
 
-        public Branch Branch { get; }
-        
+        public IServiceProvider ServiceProvider { get; set; }
+
+        public Branch ReleaseBranch { get; }
+
+        public Config Config { get; set; }
+
         public async Task StartFetchReleasesAsync()
         {
+            var hasLock = false;
+
             try
             {
-                _fetchMutex.WaitOne();
+                hasLock = _fetchSemaphore.WaitOne();
 
-                // Do stuff
+                if (hasLock)
+                {
+                    await DoFetchReleasesAsync();
+                }
             }
             finally
             {
-                _fetchMutex.ReleaseMutex();
+                if (hasLock)
+                {
+                    _fetchSemaphore.Release();
+                }
             }
         }
+
+        protected abstract Task DoFetchReleasesAsync();
     }
 }

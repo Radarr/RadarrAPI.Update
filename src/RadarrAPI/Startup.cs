@@ -42,7 +42,7 @@ namespace RadarrAPI
         {
             services.Configure<Config>(Configuration);
             services.AddSingleton(new GitHubClient(new ProductHeaderValue("RadarrAPI")));
-            services.AddSingleton(new ReleaseService());
+            services.AddSingleton<ReleaseService>();
             services.AddMvc();
 
             // Add database

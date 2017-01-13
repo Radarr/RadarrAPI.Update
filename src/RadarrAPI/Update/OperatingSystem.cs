@@ -7,9 +7,9 @@
     public enum OperatingSystem
     {
 
-        Windows,
-        Linux,
-        Osx
+        Windows = 0,
+        Linux = 1,
+        Osx = 2
 
     }
 }
