@@ -7,6 +7,8 @@
 
         public string Database { get; set; }
 
+        public string AppVeyorApiKey { get; set; }
+
         public string ApiKey { get; set; }
 
     }

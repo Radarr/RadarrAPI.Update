@@ -17,9 +17,9 @@ namespace RadarrAPI.Controllers
             _config = optionsConfig.Value;
         }
 
-        [Route("github")]
+        [Route("refresh")]
         [HttpGet]
-        public string GetGithub([FromQuery] Branch branch, [FromQuery(Name = "api_key")] string apiKey)
+        public string Refresh([FromQuery] Branch branch, [FromQuery(Name = "api_key")] string apiKey)
         {
             if (!_config.ApiKey.Equals(apiKey))
             {

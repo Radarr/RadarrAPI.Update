@@ -8,7 +8,8 @@
     {
 
         Master = 0,
-        Develop = 1
+        Develop = 1,
+        Nightly = 2
 
     }
 }

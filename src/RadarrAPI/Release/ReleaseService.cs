@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using NLog;
+using RadarrAPI.Release.AppVeyor;
 using RadarrAPI.Release.Github;
 using RadarrAPI.Update;
 
@@ -17,6 +18,7 @@ namespace RadarrAPI.Release
         {
             _releaseBranches = new ConcurrentDictionary<Branch, ReleaseSourceBase>();
             _releaseBranches.TryAdd(Branch.Develop, new GithubReleaseSource(serviceProvider, Branch.Develop));
+            _releaseBranches.TryAdd(Branch.Nightly, new AppVeyorReleaseSource(serviceProvider, Branch.Nightly));
         }
 
         public void UpdateReleases(Branch branch)
