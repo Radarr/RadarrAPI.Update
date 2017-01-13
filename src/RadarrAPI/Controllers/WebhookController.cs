@@ -18,7 +18,7 @@ namespace RadarrAPI.Controllers
         }
 
         [Route("refresh")]
-        [HttpGet]
+        [HttpGet, HttpPost]
         public string Refresh([FromQuery] Branch branch, [FromQuery(Name = "api_key")] string apiKey)
         {
             if (!_config.ApiKey.Equals(apiKey))
