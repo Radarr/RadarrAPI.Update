@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace RadarrAPI.Database.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20170112223906_Initial")]
+    [Migration("20170113010120_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

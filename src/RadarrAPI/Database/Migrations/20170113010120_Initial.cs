@@ -12,7 +12,7 @@ namespace RadarrAPI.Database.Migrations
                 columns: table => new
                 {
                     UpdateEntityId = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("MySql:ValueGeneratedOnAdd", true),
                     Branch = table.Column<int>(nullable: false),
                     Fixed = table.Column<string>(nullable: true),
                     New = table.Column<string>(nullable: true),

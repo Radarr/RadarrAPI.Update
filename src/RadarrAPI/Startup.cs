@@ -2,8 +2,6 @@
 using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,6 +9,8 @@ using NLog.Extensions.Logging;
 using Octokit;
 using RadarrAPI.Database;
 using RadarrAPI.Release;
+using Microsoft.EntityFrameworkCore;
+using MySql.Data.MySqlClient;
 
 namespace RadarrAPI
 {
@@ -46,13 +46,7 @@ namespace RadarrAPI
             services.AddMvc();
 
             // Add database
-            var sqlite = new SqliteConnectionStringBuilder
-            {
-                DataSource = Path.Combine(Configuration["DataDirectory"], "radarrapi.db"),
-                Mode = SqliteOpenMode.ReadWriteCreate
-            };
-            
-            services.AddDbContext<DatabaseContext>(o => o.UseSqlite(sqlite.ConnectionString));
+            services.AddDbContext<DatabaseContext>(o => o.UseMySql(Configuration["Database"]));
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
