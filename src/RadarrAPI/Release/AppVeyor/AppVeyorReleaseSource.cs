@@ -74,7 +74,8 @@ namespace RadarrAPI.Release.AppVeyor
                 var buildJob = buildExtended.Jobs.FirstOrDefault();
                 if (buildJob == null ||
                     buildJob.ArtifactsCount != TotalArtifactsCount ||
-                    buildJob.Status != "success") continue;
+                    buildJob.Status != "success" ||
+                    !buildExtended.Started.HasValue) continue;
 
                 // Grab artifacts
                 var artifactsPath = $"https://ci.appveyor.com/api/buildjobs/{buildJob.JobId}/artifacts";
@@ -92,7 +93,7 @@ namespace RadarrAPI.Release.AppVeyor
                     updateEntity = new UpdateEntity
                     {
                         Version = buildExtended.Version,
-                        ReleaseDate = buildExtended.Started.UtcDateTime,
+                        ReleaseDate = buildExtended.Started.Value.UtcDateTime,
                         Branch = ReleaseBranch,
                         New = new List<string>
                             {
@@ -162,8 +163,6 @@ namespace RadarrAPI.Release.AppVeyor
                     }
 
                     File.Delete(releaseZip);
-
-                    Logger.Debug($"{artifactsPath}/{artifact.FileName}");
 
                     // Add to database.
                     updateEntity.UpdateFiles.Add(new UpdateFileEntity
