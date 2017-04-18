@@ -9,5 +9,9 @@
         public string AppVeyorApiKey { get; set; }
 
         public string ApiKey { get; set; }
+
+        public string TeamcityUser { get; set; }
+
+        public string TeamcityPass { get; set; }
     }
 }
