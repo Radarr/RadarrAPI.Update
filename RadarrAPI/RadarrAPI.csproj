@@ -37,4 +37,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Release\Teamcity\" />
+    <Folder Include="Release\Teamcity\Responses\" />
+  </ItemGroup>
 </Project>

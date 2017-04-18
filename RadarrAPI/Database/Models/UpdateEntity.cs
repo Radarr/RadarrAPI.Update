@@ -62,5 +62,6 @@ namespace RadarrAPI.Database.Models
             get { return JsonConvert.SerializeObject(Fixed); }
             set { Fixed = JsonConvert.DeserializeObject<List<string>>(value); }
         }
+
     }
 }
