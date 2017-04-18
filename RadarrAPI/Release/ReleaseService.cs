@@ -42,5 +42,19 @@ namespace RadarrAPI.Release
                 }
             });
         }
+
+        public string DeployLatestRelease(Branch branch)
+        {
+            try
+            {
+                ReleaseSourceBase releaseSource;
+                _releaseBranches.TryGetValue(Branch.Develop, out releaseSource);
+                return (releaseSource as GithubReleaseSource).DeployRelease(branch);
+            }
+            catch (Exception e)
+            {
+                return e.ToString();
+            }
+        }
     }
 }
