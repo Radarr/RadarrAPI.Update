@@ -9,4 +9,4 @@ The most important task of this API is to provide auto-updating to Radarr.
 
 ## Development
 
-If you want to work on **RadarrAPI**, make sure you have [.NET Core 1.0.3 SDK](https://www.microsoft.com/net/download/core) installed and [Visual Studio 2017 RC](https://www.visualstudio.com/vs/visual-studio-2017-rc/).
+If you want to work on **RadarrAPI**, make sure you have [.NET Core 2.0.x SDK](https://www.microsoft.com/net/download/windows) installed.
