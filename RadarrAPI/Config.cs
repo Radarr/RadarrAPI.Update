@@ -1,4 +1,7 @@
-﻿namespace RadarrAPI
+﻿using System.Collections.Generic;
+using RadarrAPI.Update;
+
+namespace RadarrAPI
 {
     public class Config
     {
@@ -9,5 +12,7 @@
         public string AppVeyorApiKey { get; set; }
 
         public string ApiKey { get; set; }
+
+        public Dictionary<Branch, List<string>> Triggers { get; set; }
     }
 }

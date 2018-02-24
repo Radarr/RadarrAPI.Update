@@ -19,7 +19,7 @@ namespace RadarrAPI.Release
         /// </summary>
         private Semaphore FetchSemaphore { get; }
 
-        public async Task StartFetchReleasesAsync()
+        public async Task<bool> StartFetchReleasesAsync()
         {
             var hasLock = false;
 
@@ -29,7 +29,7 @@ namespace RadarrAPI.Release
 
                 if (hasLock)
                 {
-                    await DoFetchReleasesAsync();
+                    return await DoFetchReleasesAsync();
                 }
             }
             finally
@@ -39,8 +39,10 @@ namespace RadarrAPI.Release
                     FetchSemaphore.Release();
                 }
             }
+
+            return false;
         }
 
-        protected abstract Task DoFetchReleasesAsync();
+        protected abstract Task<bool> DoFetchReleasesAsync();
     }
 }

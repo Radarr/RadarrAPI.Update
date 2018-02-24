@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using NLog;
-using RadarrAPI.Database;
+using Microsoft.Extensions.Options;
 using RadarrAPI.Release.AppVeyor;
 using RadarrAPI.Release.Github;
 using RadarrAPI.Update;
@@ -19,6 +19,8 @@ namespace RadarrAPI.Release
         
         private readonly ConcurrentDictionary<Branch, Type> _releaseBranches;
 
+        private readonly Config _config;
+
         static ReleaseService()
         {
             ReleaseLocks = new ConcurrentDictionary<Branch, SemaphoreSlim>();
@@ -26,7 +28,7 @@ namespace RadarrAPI.Release
             ReleaseLocks.TryAdd(Branch.Nightly, new SemaphoreSlim(1, 1));
         }
 
-        public ReleaseService(IServiceProvider serviceProvider, DatabaseContext databaseContext)
+        public ReleaseService(IServiceProvider serviceProvider, IOptions<Config> configOptions)
         {
             _serviceProvider = serviceProvider;
 
@@ -34,6 +36,7 @@ namespace RadarrAPI.Release
             _releaseBranches.TryAdd(Branch.Develop, typeof(GithubReleaseSource));
             _releaseBranches.TryAdd(Branch.Nightly, typeof(AppVeyorReleaseSource));
 
+            _config = configOptions.Value;
         }
 
         public async Task UpdateReleasesAsync(Branch branch)
@@ -60,7 +63,11 @@ namespace RadarrAPI.Release
 
                     releaseSourceInstance.ReleaseBranch = branch;
 
-                    await releaseSourceInstance.StartFetchReleasesAsync();
+                    var hasNewRelease = await releaseSourceInstance.StartFetchReleasesAsync();
+                    if (hasNewRelease)
+                    {
+                        await CallTriggers(branch);
+                    }
                 }
             }
             finally
@@ -68,6 +75,36 @@ namespace RadarrAPI.Release
                 if (obtainedLock)
                 {
                     releaseLock.Release();
+                }
+            }
+        }
+
+        private async Task CallTriggers(Branch branch)
+        {
+            var triggers = _config.Triggers[branch];
+            if (triggers.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var trigger in triggers)
+            {
+                try
+                {
+                    var request = WebRequest.CreateHttp(trigger);
+                    request.Method = "GET";
+                    request.UserAgent = "RadarrAPI.Update/Trigger";
+                    request.KeepAlive = false;
+                    request.Timeout = 2500;
+                    request.ReadWriteTimeout = 2500;
+                    request.ContinueTimeout = 2500;
+
+                    var response = await request.GetResponseAsync();
+                    response.Dispose();
+                }
+                catch (Exception)
+                {
+                    // don't care.
                 }
             }
         }
