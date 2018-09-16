@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using RadarrAPI.Release;
 using RadarrAPI.Services.BackgroundTasks;
+using RadarrAPI.Services.ReleaseCheck;
 using RadarrAPI.Update;
 
 namespace RadarrAPI.Controllers

@@ -10,10 +10,10 @@ using NLog.Extensions.Logging;
 using NLog.Web;
 using Octokit;
 using RadarrAPI.Database;
-using RadarrAPI.Release;
-using RadarrAPI.Release.AppVeyor;
-using RadarrAPI.Release.Github;
 using RadarrAPI.Services.BackgroundTasks;
+using RadarrAPI.Services.ReleaseCheck;
+using RadarrAPI.Services.ReleaseCheck.AppVeyor;
+using RadarrAPI.Services.ReleaseCheck.Github;
 using StatsdClient;
 using TraktApiSharp;
 
