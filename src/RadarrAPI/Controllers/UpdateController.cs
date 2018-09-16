@@ -23,7 +23,9 @@ namespace RadarrAPI.Controllers
 
         [Route("{branch}/changes")]
         [HttpGet]
-        public object GetChanges([FromRoute(Name = "branch")]Branch updateBranch, [FromQuery(Name = "version")]string urlVersion, [FromQuery(Name = "os")]OperatingSystem operatingSystem)
+        public ActionResult GetChanges(
+            [FromRoute(Name = "branch")] Branch updateBranch,
+            [FromQuery(Name = "os")] OperatingSystem operatingSystem)
         {
             using (DogStatsd.StartTimer("controller.update.get_changes.time"))
             {
@@ -65,21 +67,24 @@ namespace RadarrAPI.Controllers
                     });
                 }
 
-                return response;
+                return Ok(response);
             }
         }
 
         [Route("{branch}")]
         [HttpGet]
-        public object GetUpdates([FromRoute(Name = "branch")]Branch updateBranch, [FromQuery(Name = "version")]string urlVersion, [FromQuery(Name = "os")]OperatingSystem operatingSystem)
+        public ActionResult GetUpdates(
+            [FromRoute(Name = "branch")]Branch updateBranch, 
+            [FromQuery(Name = "os")]OperatingSystem operatingSystem,
+            [FromQuery(Name = "version")]string urlVersion)
         {
             // Check given version
-            if (!Version.TryParse(urlVersion, out Version version))
+            if (!Version.TryParse(urlVersion, out var version))
             {
-                return new
+                return BadRequest(new
                 {
                     ErrorMessage = "Invalid version number specified."
-                };
+                });
             }
 
             using (DogStatsd.StartTimer("controller.update.get_updates.time"))
@@ -95,30 +100,30 @@ namespace RadarrAPI.Controllers
 
                 if (update == null)
                 {
-                    return new
+                    return NotFound(new
                     {
                         ErrorMessage = "Latest update not found."
-                    };
+                    });
                 }
 
                 // Check if update file is present
                 var updateFile = update.UpdateFiles.FirstOrDefault(u => u.OperatingSystem == operatingSystem);
                 if (updateFile == null)
                 {
-                    return new
+                    return NotFound(new
                     {
                         ErrorMessage = "Latest update file not found."
-                    };
+                    });
                 }
 
                 // Compare given version and update version
                 var updateVersion = new Version(update.Version);
                 if (updateVersion.CompareTo(version) <= 0)
                 {
-                    return new UpdatePackageContainer
+                    return Ok(new UpdatePackageContainer
                     {
                         Available = false
-                    };
+                    });
                 }
 
                 // Get the update changes
@@ -133,7 +138,7 @@ namespace RadarrAPI.Controllers
                     };
                 }
 
-                return new UpdatePackageContainer
+                return Ok(new UpdatePackageContainer
                 {
                     Available = true,
                     UpdatePackage = new UpdatePackage
@@ -146,7 +151,7 @@ namespace RadarrAPI.Controllers
                         Hash = updateFile.Hash,
                         Branch = update.Branch.ToString().ToLower()
                     }
-                };
+                });
             }
         }
     }

@@ -13,6 +13,7 @@ using RadarrAPI.Database;
 using RadarrAPI.Release;
 using RadarrAPI.Release.AppVeyor;
 using RadarrAPI.Release.Github;
+using RadarrAPI.Services.BackgroundTasks;
 using StatsdClient;
 using TraktApiSharp;
 
@@ -41,7 +42,10 @@ namespace RadarrAPI
             services.Configure<Config>(Config.GetSection("Radarr"));
             services.AddDbContextPool<DatabaseContext>(o => o.UseMySql(ConfigRadarr.Database));
             services.AddSingleton(new GitHubClient(new ProductHeaderValue("RadarrAPI")));
-            
+
+            services.AddHostedService<QueuedHostedService>();
+            services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+
             services.AddTransient<ReleaseService>();
             services.AddTransient<GithubReleaseSource>();
             services.AddTransient<AppVeyorReleaseSource>();
@@ -53,9 +57,6 @@ namespace RadarrAPI
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IApplicationLifetime applicationLifetime)
         {
-            loggerFactory.AddNLog();
-            app.AddNLogWeb();
-            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
