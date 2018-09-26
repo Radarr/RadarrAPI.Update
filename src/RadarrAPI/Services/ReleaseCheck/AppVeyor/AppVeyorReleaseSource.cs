@@ -40,7 +40,6 @@ namespace RadarrAPI.Services.ReleaseCheck.AppVeyor
 
         protected override async Task<bool> DoFetchReleasesAsync()
         {
-            LogManager.GetCurrentClassLogger().Warn("AppVeyorReleaseSource: DoFetchReleasesAsync");
             if (ReleaseBranch == Branch.Unknown)
             {
                 throw new ArgumentException("ReleaseBranch must not be unknown when fetching releases.");
@@ -72,8 +71,6 @@ namespace RadarrAPI.Services.ReleaseCheck.AppVeyor
                 var buildExtendedData = await _httpClient.GetStringAsync($"https://ci.appveyor.com/api/projects/{AccountName}/{ProjectSlug}/build/{build.Version}");
                 var buildExtended = JsonConvert.DeserializeObject<AppVeyorProjectLastBuild>(buildExtendedData).Build;
 
-                LogManager.GetCurrentClassLogger().Warn("AppVeyorReleaseSource: Got extended data");
-
                 // Filter out incomplete builds
                 var buildJob = buildExtended.Jobs.FirstOrDefault();
                 if (buildJob == null ||
@@ -84,8 +81,6 @@ namespace RadarrAPI.Services.ReleaseCheck.AppVeyor
                 var artifactsPath = $"https://ci.appveyor.com/api/buildjobs/{buildJob.JobId}/artifacts";
                 var artifactsData = await _httpClient.GetStringAsync(artifactsPath);
                 var artifacts = JsonConvert.DeserializeObject<AppVeyorArtifact[]>(artifactsData);
-
-                LogManager.GetCurrentClassLogger().Warn("AppVeyorReleaseSource: Got artifacts");
 
                 // Get an updateEntity
                 var updateEntity = await _database.UpdateEntities
@@ -157,15 +152,11 @@ namespace RadarrAPI.Services.ReleaseCheck.AppVeyor
                     var releaseFileName = artifact.FileName.Split('/').Last();
                     var releaseZip = Path.Combine(_config.DataDirectory, ReleaseBranch.ToString(), releaseFileName);
                     string releaseHash;
-                
-                    LogManager.GetCurrentClassLogger().Warn("AppVeyorReleaseSource: Dest " + releaseZip);
 
                     if (!File.Exists(releaseZip))
                     {
                         Directory.CreateDirectory(Path.GetDirectoryName(releaseZip));
-                        LogManager.GetCurrentClassLogger().Warn("AppVeyorReleaseSource: Created dir");
                         await File.WriteAllBytesAsync(releaseZip, await _httpClient.GetByteArrayAsync(releaseDownloadUrl));
-                        LogManager.GetCurrentClassLogger().Warn("AppVeyorReleaseSource: Wrote all bytes");
                     }
 
                     using (var stream = File.OpenRead(releaseZip))
