@@ -29,6 +29,8 @@ namespace RadarrAPI
 
         private static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .UseSentry()
+                .UseKestrel(x => x.AddServerHeader = false)
                 .UseStartup<Startup>()
                 .ConfigureLogging(builder =>
                 {
