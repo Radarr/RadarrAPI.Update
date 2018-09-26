@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog;
+using Sentry;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace RadarrAPI.Services.BackgroundTasks
@@ -12,12 +14,20 @@ namespace RadarrAPI.Services.BackgroundTasks
     {
         private readonly ILogger _logger;
 
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+
+        private readonly IHub _sentry;
+
         public QueuedHostedService(
             IBackgroundTaskQueue taskQueue,
-            ILoggerFactory loggerFactory)
+            ILoggerFactory loggerFactory,
+            IServiceScopeFactory serviceScopeFactory,
+            IHub sentry)
         {
             TaskQueue = taskQueue;
             _logger = loggerFactory.CreateLogger<QueuedHostedService>();
+            _serviceScopeFactory = serviceScopeFactory;
+            _sentry = sentry;
         }
 
         public IBackgroundTaskQueue TaskQueue { get; }
@@ -35,11 +45,16 @@ namespace RadarrAPI.Services.BackgroundTasks
                 try
                 {
                     LogManager.GetCurrentClassLogger().Warn("QueuedHostedService: Running a task.");
-                    await workItem(cancellationToken);
+
+                    using (var scope = _serviceScopeFactory.CreateScope())
+                    {
+                        await workItem(scope.ServiceProvider, cancellationToken);
+                    }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, $"Error occurred executing {nameof(workItem)}.");
+                    _sentry.CaptureException(ex);
                 }
             }
 

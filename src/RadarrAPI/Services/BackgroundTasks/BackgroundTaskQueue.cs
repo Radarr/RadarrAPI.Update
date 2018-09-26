@@ -7,11 +7,17 @@ namespace RadarrAPI.Services.BackgroundTasks
 {
     public class BackgroundTaskQueue : IBackgroundTaskQueue
     {
-        private readonly ConcurrentQueue<Func<CancellationToken, Task>> _workItems = new ConcurrentQueue<Func<CancellationToken, Task>>();
+        private readonly ConcurrentQueue<Func<IServiceProvider, CancellationToken, Task>> _workItems;
 
-        private readonly SemaphoreSlim _signal = new SemaphoreSlim(0);
+        private readonly SemaphoreSlim _signal;
 
-        public void QueueBackgroundWorkItem(Func<CancellationToken, Task> workItem)
+        public BackgroundTaskQueue()
+        {
+            _workItems = new ConcurrentQueue<Func<IServiceProvider, CancellationToken, Task>>();
+            _signal = new SemaphoreSlim(0);
+        }
+
+        public void QueueBackgroundWorkItem(Func<IServiceProvider, CancellationToken, Task> workItem)
         {
             if (workItem == null)
             {
@@ -22,7 +28,7 @@ namespace RadarrAPI.Services.BackgroundTasks
             _signal.Release();
         }
 
-        public async Task<Func<CancellationToken, Task>> DequeueAsync(CancellationToken cancellationToken)
+        public async Task<Func<IServiceProvider, CancellationToken, Task>> DequeueAsync(CancellationToken cancellationToken)
         {
             await _signal.WaitAsync(cancellationToken);
             _workItems.TryDequeue(out var workItem);
