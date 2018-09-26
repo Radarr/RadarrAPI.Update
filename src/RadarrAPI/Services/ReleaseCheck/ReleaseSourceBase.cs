@@ -1,5 +1,7 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
+using NLog;
 using RadarrAPI.Update;
 
 namespace RadarrAPI.Services.ReleaseCheck
@@ -21,6 +23,7 @@ namespace RadarrAPI.Services.ReleaseCheck
 
         public async Task<bool> StartFetchReleasesAsync()
         {
+            LogManager.GetCurrentClassLogger().Warn("ReleaseSourceBase: start fetching.");
             var hasLock = false;
 
             try
@@ -31,6 +34,10 @@ namespace RadarrAPI.Services.ReleaseCheck
                 {
                     return await DoFetchReleasesAsync();
                 }
+            }
+            catch (Exception e)
+            {
+                LogManager.GetCurrentClassLogger().Warn(e, "ReleaseSourceBase");
             }
             finally
             {

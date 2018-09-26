@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NLog;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace RadarrAPI.Services.BackgroundTasks
 {
@@ -26,10 +28,13 @@ namespace RadarrAPI.Services.BackgroundTasks
 
             while (!cancellationToken.IsCancellationRequested)
             {
+                LogManager.GetCurrentClassLogger().Warn("QueuedHostedService: Waiting for task.");
+
                 var workItem = await TaskQueue.DequeueAsync(cancellationToken);
 
                 try
                 {
+                    LogManager.GetCurrentClassLogger().Warn("QueuedHostedService: Running a task.");
                     await workItem(cancellationToken);
                 }
                 catch (Exception ex)

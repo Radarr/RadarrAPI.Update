@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using NLog;
 using RadarrAPI.Services.ReleaseCheck.AppVeyor;
 using RadarrAPI.Services.ReleaseCheck.Github;
 using RadarrAPI.Update;
@@ -55,10 +56,12 @@ namespace RadarrAPI.Services.ReleaseCheck
 
             try
             {
+                LogManager.GetCurrentClassLogger().Warn("ReleaseService: Obtaining a lock.");
                 obtainedLock = await releaseLock.WaitAsync(TimeSpan.FromMinutes(5));
 
                 if (obtainedLock)
                 {
+                    LogManager.GetCurrentClassLogger().Warn("ReleaseService: Obtained lock.");
                     var releaseSourceInstance = (ReleaseSourceBase) _serviceProvider.GetRequiredService(releaseSourceBaseType);
 
                     releaseSourceInstance.ReleaseBranch = branch;
