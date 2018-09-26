@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -31,18 +30,11 @@ namespace RadarrAPI.Services.ReleaseCheck.AppVeyor
         
         private readonly HttpClient _httpClient;
 
-        private readonly HttpClient _downloadHttpClient;
-
-        public AppVeyorReleaseSource(DatabaseContext database, IOptions<Config> config)
+        public AppVeyorReleaseSource(DatabaseContext database, IHttpClientFactory httpClientFactory, IOptions<Config> config)
         {
             _database = database;
+            _httpClient = httpClientFactory.CreateClient("AppVeyor");
             _config = config.Value;
-
-            _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _config.AppVeyorApiKey);
-
-            _downloadHttpClient = new HttpClient();
         }
 
         protected override async Task<bool> DoFetchReleasesAsync()
@@ -61,15 +53,15 @@ namespace RadarrAPI.Services.ReleaseCheck.AppVeyor
             // Store here temporarily so we don't break on not processed builds.
             var lastBuild = _lastBuildId;
 
-            foreach (var build in history.Builds.Take(5).ToList()) // Only take last 5.
+            // Make sure we dont distribute;
+            // - pull requests,
+            // - unsuccesful builds,
+            // - tagged builds (duplicate).
+            foreach (var build in history.Builds.Where(x => !x.PullRequestId.HasValue && !x.IsTag).ToList())
             {
                 if (lastBuild.HasValue &&
                     lastBuild.Value >= build.BuildId) break;
 
-                // Make sure we dont distribute;
-                // - pull requests,
-                // - unsuccesful builds,
-                // - tagged builds (duplicate).
                 if (build.PullRequestId.HasValue ||
                     build.IsTag) continue;
 
@@ -88,9 +80,11 @@ namespace RadarrAPI.Services.ReleaseCheck.AppVeyor
                 var artifacts = JsonConvert.DeserializeObject<AppVeyorArtifact[]>(artifactsData);
 
                 // Get an updateEntity
-                var updateEntity = _database.UpdateEntities
+                var updateEntity = await _database.UpdateEntities
                     .Include(x => x.UpdateFiles)
-                    .FirstOrDefault(x => x.Version.Equals(buildExtended.Version) && x.Branch.Equals(ReleaseBranch));
+                    .FirstOrDefaultAsync(x => 
+                        x.Version.Equals(buildExtended.Version) && 
+                        x.Branch.Equals(ReleaseBranch));
 
                 if (updateEntity == null)
                 {
@@ -159,7 +153,7 @@ namespace RadarrAPI.Services.ReleaseCheck.AppVeyor
                     if (!File.Exists(releaseZip))
                     {
                         Directory.CreateDirectory(Path.GetDirectoryName(releaseZip));
-                        File.WriteAllBytes(releaseZip, await _downloadHttpClient.GetByteArrayAsync(releaseDownloadUrl));
+                        File.WriteAllBytes(releaseZip, await _httpClient.GetByteArrayAsync(releaseDownloadUrl));
                     }
 
                     using (var stream = File.OpenRead(releaseZip))

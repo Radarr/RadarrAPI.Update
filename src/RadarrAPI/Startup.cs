@@ -1,11 +1,15 @@
 ﻿using System;
 using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NLog.Extensions.Logging;
 using NLog.Web;
 using Octokit;
@@ -16,6 +20,7 @@ using RadarrAPI.Services.ReleaseCheck.AppVeyor;
 using RadarrAPI.Services.ReleaseCheck.Github;
 using StatsdClient;
 using TraktApiSharp;
+using ProductHeaderValue = Octokit.ProductHeaderValue;
 
 namespace RadarrAPI
 {
@@ -41,7 +46,21 @@ namespace RadarrAPI
         {
             services.Configure<Config>(Config.GetSection("Radarr"));
             services.AddDbContextPool<DatabaseContext>(o => o.UseMySql(ConfigRadarr.Database));
+
             services.AddSingleton(new GitHubClient(new ProductHeaderValue("RadarrAPI")));
+            services.AddHttpClient("AppVeyor")
+                .ConfigureHttpClient((serviceProvider, client) =>
+                {
+                    var config = serviceProvider.GetRequiredService<IOptions<Config>>();
+
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", config.Value.AppVeyorApiKey);
+                })
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    UseCookies = false,
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                });
 
             services.AddHostedService<QueuedHostedService>();
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
