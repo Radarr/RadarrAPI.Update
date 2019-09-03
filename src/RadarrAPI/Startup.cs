@@ -83,6 +83,8 @@ namespace RadarrAPI
                 app.UseDeveloperExceptionPage();
             }
 
+            UpdateDatabase(app);
+
             app.UseMvc();
             
             applicationLifetime.ApplicationStarted.Register(() => DogStatsd.Event("RadarrAPI", "RadarrAPI just started."));
@@ -115,6 +117,19 @@ namespace RadarrAPI
                 StatsdPort = port,
                 Prefix = prefix
             });
+        }
+
+        private static void UpdateDatabase(IApplicationBuilder app)
+        {
+            using (var serviceScope = app.ApplicationServices
+                   .GetRequiredService<IServiceScopeFactory>()
+                   .CreateScope())
+            {
+                using (var context = serviceScope.ServiceProvider.GetService<DatabaseContext>())
+                {
+                    context.Database.Migrate();
+                }
+            }
         }
     }
 }
