@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Options;
 using NLog;
 using RadarrAPI.Services.ReleaseCheck.AppVeyor;
 using RadarrAPI.Services.ReleaseCheck.Github;
+using RadarrAPI.Services.ReleaseCheck.Azure;
 using RadarrAPI.Update;
 using Sentry;
 
@@ -32,6 +34,7 @@ namespace RadarrAPI.Services.ReleaseCheck
             ReleaseLocks = new ConcurrentDictionary<Branch, SemaphoreSlim>();
             ReleaseLocks.TryAdd(Branch.Develop, new SemaphoreSlim(1, 1));
             ReleaseLocks.TryAdd(Branch.Nightly, new SemaphoreSlim(1, 1));
+            ReleaseLocks.TryAdd(Branch.Aphrodite, new SemaphoreSlim(1, 1));
         }
 
         public ReleaseService(
@@ -47,6 +50,7 @@ namespace RadarrAPI.Services.ReleaseCheck
             _releaseBranches = new ConcurrentDictionary<Branch, Type>();
             _releaseBranches.TryAdd(Branch.Develop, typeof(GithubReleaseSource));
             _releaseBranches.TryAdd(Branch.Nightly, typeof(AppVeyorReleaseSource));
+            _releaseBranches.TryAdd(Branch.Aphrodite, typeof(AzureReleaseSource));
 
             _config = configOptions.Value;
         }
@@ -101,8 +105,11 @@ namespace RadarrAPI.Services.ReleaseCheck
 
         private async Task CallTriggers(Branch branch)
         {
-            var triggers = _config.Triggers[branch];
-            if (triggers.Count == 0)
+            var logger = LogManager.GetCurrentClassLogger();
+            logger.Debug($"Calling triggers for {branch}");
+
+            List<string> triggers;
+            if (_config.Triggers == null || !_config.Triggers.TryGetValue(branch, out triggers) || triggers.Count == 0)
             {
                 return;
             }
