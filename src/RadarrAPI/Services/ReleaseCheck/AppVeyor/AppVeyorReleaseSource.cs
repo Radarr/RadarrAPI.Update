@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using NLog;
 using RadarrAPI.Database;
 using RadarrAPI.Database.Models;
 using RadarrAPI.Services.ReleaseCheck.AppVeyor.Responses;
@@ -20,17 +19,14 @@ namespace RadarrAPI.Services.ReleaseCheck.AppVeyor
     public class AppVeyorReleaseSource : ReleaseSourceBase
     {
         private const string AccountName = "galli-leo";
-        
         private const string ProjectSlug = "radarr-usby1";
-
+        
         private static int? _lastBuildId;
 
         private readonly DatabaseContext _database;
-        
+        private readonly HttpClient _httpClient;
         private readonly Config _config;
         
-        private readonly HttpClient _httpClient;
-
         public AppVeyorReleaseSource(DatabaseContext database, IHttpClientFactory httpClientFactory, IOptions<Config> config)
         {
             _database = database;
@@ -60,8 +56,6 @@ namespace RadarrAPI.Services.ReleaseCheck.AppVeyor
             // - tagged builds (duplicate).
             foreach (var build in history.Builds.Where(x => !x.PullRequestId.HasValue && !x.IsTag).ToList())
             {
-                LogManager.GetCurrentClassLogger().Warn("AppVeyorReleaseSource: Build > " + build.Version);
-
                 if (lastBuild.HasValue &&
                     lastBuild.Value >= build.BuildId) break;
 

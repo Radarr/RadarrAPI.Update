@@ -10,7 +10,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NLog.Web;
 using Octokit;
 using RadarrAPI.Database;
 using RadarrAPI.Services.BackgroundTasks;
@@ -18,6 +17,7 @@ using RadarrAPI.Services.ReleaseCheck;
 using RadarrAPI.Services.ReleaseCheck.AppVeyor;
 using RadarrAPI.Services.ReleaseCheck.Github;
 using RadarrAPI.Services.ReleaseCheck.Azure;
+using Serilog;
 using TraktApiSharp;
 using ProductHeaderValue = Octokit.ProductHeaderValue;
 
@@ -29,8 +29,6 @@ namespace RadarrAPI
         {
             Config = configuration;
             ConfigRadarr = Config.GetSection("Radarr").Get<Config>();
-
-            env.ConfigureNLog("nlog.config");
             
             SetupDataDirectory();
         }
@@ -72,16 +70,16 @@ namespace RadarrAPI
             services.AddMvc();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IApplicationLifetime applicationLifetime)
         {
+            UpdateDatabase(app);
+            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
-            UpdateDatabase(app);
-
+            app.UseSerilogRequestLogging();
             app.UseMvc();
         }
 

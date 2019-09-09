@@ -1,43 +1,47 @@
 ﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Logging;
-using NLog;
-using NLog.Web;
 using System;
+using Serilog;
+using Serilog.Events;
 
 namespace RadarrAPI
 {
-    public class Program
+    public static class Program
     {
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
-            var logger = NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+#if DEBUG
+                .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Information)
+#endif
+                .Enrich.FromLogContext()
+                .WriteTo.Console()
+                .CreateLogger();
+
             try
             {
-                BuildWebHost(args).Run();
+                Log.Information("Starting web host");
+                CreateWebHostBuilder(args).Build().Run();
+                return 0;
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Stopped program because of exception");
-                throw;
+                Log.Fatal(ex, "Host terminated unexpectedly");
+                return 1;
             }
             finally
             {
-                LogManager.Shutdown();
+                Log.CloseAndFlush();
             }
         }
 
-        private static IWebHost BuildWebHost(string[] args) =>
+        private static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseSentry()
                 .UseKestrel(x => x.AddServerHeader = false)
                 .UseStartup<Startup>()
-                .ConfigureLogging(builder =>
-                {
-                    builder.ClearProviders();
-                    builder.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Information);
-                })
-                .UseNLog()
-                .Build();
+                .UseSerilog();
     }
 }

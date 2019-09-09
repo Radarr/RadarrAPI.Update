@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NLog;
 using RadarrAPI.Services.ReleaseCheck.AppVeyor;
 using RadarrAPI.Services.ReleaseCheck.Github;
 using RadarrAPI.Services.ReleaseCheck.Azure;
@@ -105,11 +103,9 @@ namespace RadarrAPI.Services.ReleaseCheck
 
         private async Task CallTriggers(Branch branch)
         {
-            var logger = LogManager.GetCurrentClassLogger();
-            logger.Debug($"Calling triggers for {branch}");
+            _logger.LogDebug("Calling triggers for branch {0}.", branch);
 
-            List<string> triggers;
-            if (_config.Triggers == null || !_config.Triggers.TryGetValue(branch, out triggers) || triggers.Count == 0)
+            if (_config.Triggers == null || !_config.Triggers.TryGetValue(branch, out var triggers) || triggers.Count == 0)
             {
                 return;
             }

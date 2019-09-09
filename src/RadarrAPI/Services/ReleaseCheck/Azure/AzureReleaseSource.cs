@@ -11,7 +11,6 @@ using RadarrAPI.Services.ReleaseCheck.Azure.Responses;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using NLog;
 using OperatingSystem = RadarrAPI.Update.OperatingSystem;
 using RadarrAPI.Update;
 
@@ -26,15 +25,10 @@ namespace RadarrAPI.Services.ReleaseCheck.Azure
 
         private static int? _lastBuildId;
 
-        private readonly Config _config;
-
         private readonly DatabaseContext _database;
-
+        private readonly Config _config;
         private readonly HttpClient _downloadHttpClient;
-
         private readonly HttpClient _httpClient;
-
-        private readonly Logger logger;
 
         public AzureReleaseSource(DatabaseContext database, IOptions<Config> config)
         {
@@ -45,8 +39,6 @@ namespace RadarrAPI.Services.ReleaseCheck.Azure
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             _downloadHttpClient = new HttpClient();
-
-            logger = LogManager.GetCurrentClassLogger();
         }
 
         protected override async Task<bool> DoFetchReleasesAsync()
@@ -58,10 +50,7 @@ namespace RadarrAPI.Services.ReleaseCheck.Azure
 
             var hasNewRelease = false;
             var historyUrl = $"https://dev.azure.com/{AccountName}/{ProjectSlug}/_apis/build/builds?api-version=5.1&branchName=refs/heads/{BranchName}&reasonFilter=individualCI&statusFilter=completed&resultFilter=succeeded&queryOrder=startTimeDescending&$top=5";
-            logger.Trace(historyUrl);
             var historyData = await _httpClient.GetStringAsync(historyUrl);
-            logger.Trace(historyData);
-
             var history = JsonConvert.DeserializeObject<AzureList<AzureProjectBuild>>(historyData).Value;
 
             // Store here temporarily so we don't break on not processed builds.
@@ -70,24 +59,19 @@ namespace RadarrAPI.Services.ReleaseCheck.Azure
             // URL query has filtered to most recent 5 successful, completed builds
             foreach (var build in history)
             {
-                if (lastBuild.HasValue &&
-                    lastBuild.Value >= build.BuildId) break;
-
-                // Extract the build version
-                logger.Info($"Found version: {build.Version}");
+                if (lastBuild.HasValue && lastBuild.Value >= build.BuildId)
+                {
+                    break;
+                }
 
                 // Get build changes
                 var changesPath = $"https://dev.azure.com/{AccountName}/{ProjectSlug}/_apis/build/builds/{build.BuildId}/changes?api-version=5.1";
-                logger.Trace(changesPath);
                 var changesData = await _httpClient.GetStringAsync(changesPath);
-                logger.Trace(changesData);
                 var changes = JsonConvert.DeserializeObject<AzureList<AzureChange>>(changesData).Value;
 
                 // Grab artifacts
                 var artifactsPath = $"https://dev.azure.com/{AccountName}/{ProjectSlug}/_apis/build/builds/{build.BuildId}/artifacts?api-version=5.1";
-                logger.Trace(artifactsPath);
                 var artifactsData = await _httpClient.GetStringAsync(artifactsPath);
-                logger.Trace(artifactsData);
                 var artifacts = JsonConvert.DeserializeObject<AzureList<AzureArtifact>>(artifactsData).Value;
 
                 // there should be a single artifact called 'Packages' we parse for packages
@@ -99,9 +83,7 @@ namespace RadarrAPI.Services.ReleaseCheck.Azure
 
                 // Download the manifest
                 var manifestPath= $"https://dev.azure.com/{AccountName}/{ProjectSlug}/_apis/build/builds/{build.BuildId}/artifacts?artifactName={artifact.Name}&fileId={artifact.Resource.Data}&fileName=manifest&api-version=5.1";
-                logger.Trace(manifestPath);
                 var manifestData = await _httpClient.GetStringAsync(manifestPath);
-                logger.Trace(manifestData);
                 var files = JsonConvert.DeserializeObject<AzureManifest>(manifestData).Files;
 
                 // Get an updateEntity
