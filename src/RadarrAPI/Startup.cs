@@ -18,6 +18,7 @@ using RadarrAPI.Services.BackgroundTasks;
 using RadarrAPI.Services.ReleaseCheck;
 using RadarrAPI.Services.ReleaseCheck.AppVeyor;
 using RadarrAPI.Services.ReleaseCheck.Github;
+using RadarrAPI.Services.ReleaseCheck.Azure;
 using StatsdClient;
 using TraktApiSharp;
 using ProductHeaderValue = Octokit.ProductHeaderValue;
@@ -68,7 +69,8 @@ namespace RadarrAPI
             services.AddTransient<ReleaseService>();
             services.AddTransient<GithubReleaseSource>();
             services.AddTransient<AppVeyorReleaseSource>();
-            
+            services.AddTransient<AzureReleaseSource>();
+
             services.AddSingleton(new TraktClient(Config.GetSection("Trakt")["ClientId"], Config.GetSection("Trakt")["ClientSecret"]));
             services.AddMvc();
         }
@@ -80,6 +82,8 @@ namespace RadarrAPI
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            UpdateDatabase(app);
 
             app.UseMvc();
             
@@ -113,6 +117,19 @@ namespace RadarrAPI
                 StatsdPort = port,
                 Prefix = prefix
             });
+        }
+
+        private static void UpdateDatabase(IApplicationBuilder app)
+        {
+            using (var serviceScope = app.ApplicationServices
+                   .GetRequiredService<IServiceScopeFactory>()
+                   .CreateScope())
+            {
+                using (var context = serviceScope.ServiceProvider.GetService<DatabaseContext>())
+                {
+                    context.Database.Migrate();
+                }
+            }
         }
     }
 }
