@@ -149,7 +149,12 @@ namespace RadarrAPI.Services.ReleaseCheck.Github
                     if (!File.Exists(releaseZip))
                     {
                         Directory.CreateDirectory(Path.GetDirectoryName(releaseZip));
-                        File.WriteAllBytes(releaseZip, await _httpClient.GetByteArrayAsync(releaseAsset.BrowserDownloadUrl));
+                        
+                        using (var fileStream = File.OpenWrite(releaseZip))
+                        using (var artifactStream = await _httpClient.GetStreamAsync(releaseAsset.BrowserDownloadUrl))
+                        {
+                            await artifactStream.CopyToAsync(fileStream);
+                        }
                     }
 
                     using (var stream = File.OpenRead(releaseZip))

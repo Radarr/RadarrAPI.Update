@@ -2,7 +2,6 @@
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using RadarrAPI.Database;
@@ -27,18 +26,13 @@ namespace RadarrAPI.Services.ReleaseCheck.Azure
 
         private readonly DatabaseContext _database;
         private readonly Config _config;
-        private readonly HttpClient _downloadHttpClient;
         private readonly HttpClient _httpClient;
 
-        public AzureReleaseSource(DatabaseContext database, IOptions<Config> config)
+        public AzureReleaseSource(DatabaseContext database, IHttpClientFactory httpClientFactory, IOptions<Config> config)
         {
             _database = database;
             _config = config.Value;
-
-            _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            _downloadHttpClient = new HttpClient();
+            _httpClient = httpClientFactory.CreateClient();
         }
 
         protected override async Task<bool> DoFetchReleasesAsync()
@@ -64,6 +58,12 @@ namespace RadarrAPI.Services.ReleaseCheck.Azure
                     break;
                 }
 
+                // Found a build that hasn't started yet..?
+                if (!build.Started.HasValue)
+                {
+                    break;
+                }
+
                 // Get build changes
                 var changesPath = $"https://dev.azure.com/{AccountName}/{ProjectSlug}/_apis/build/builds/{build.BuildId}/changes?api-version=5.1";
                 var changesData = await _httpClient.GetStringAsync(changesPath);
@@ -82,7 +82,7 @@ namespace RadarrAPI.Services.ReleaseCheck.Azure
                 }
 
                 // Download the manifest
-                var manifestPath= $"https://dev.azure.com/{AccountName}/{ProjectSlug}/_apis/build/builds/{build.BuildId}/artifacts?artifactName={artifact.Name}&fileId={artifact.Resource.Data}&fileName=manifest&api-version=5.1";
+                var manifestPath = $"https://dev.azure.com/{AccountName}/{ProjectSlug}/_apis/build/builds/{build.BuildId}/artifacts?artifactName={artifact.Name}&fileId={artifact.Resource.Data}&fileName=manifest&api-version=5.1";
                 var manifestData = await _httpClient.GetStringAsync(manifestPath);
                 var files = JsonConvert.DeserializeObject<AzureManifest>(manifestData).Files;
 
@@ -115,7 +115,6 @@ namespace RadarrAPI.Services.ReleaseCheck.Azure
                     // Detect target operating system.
                     OperatingSystem operatingSystem;
 
-                    // NB: Added this because our "artifacts incliude a Lidarr...windows.exe, which really shouldn't be added
                     if (file.Path.Contains("windows.") && file.Path.ToLower().Contains(".zip"))
                     {
                         operatingSystem = OperatingSystem.Windows;
@@ -150,7 +149,12 @@ namespace RadarrAPI.Services.ReleaseCheck.Azure
                     if (!File.Exists(releaseZip))
                     {
                         Directory.CreateDirectory(Path.GetDirectoryName(releaseZip));
-                        File.WriteAllBytes(releaseZip, await _downloadHttpClient.GetByteArrayAsync(releaseDownloadUrl));
+
+                        using (var fileStream = File.OpenWrite(releaseZip))
+                        using (var artifactStream = await _httpClient.GetStreamAsync(releaseDownloadUrl))
+                        {
+                            await artifactStream.CopyToAsync(fileStream);
+                        }
                     }
 
                     using (var stream = File.OpenRead(releaseZip))

@@ -150,7 +150,12 @@ namespace RadarrAPI.Services.ReleaseCheck.AppVeyor
                     if (!File.Exists(releaseZip))
                     {
                         Directory.CreateDirectory(Path.GetDirectoryName(releaseZip));
-                        await File.WriteAllBytesAsync(releaseZip, await _httpClient.GetByteArrayAsync(releaseDownloadUrl));
+                        
+                        using (var fileStream = File.OpenWrite(releaseZip))
+                        using (var artifactStream = await _httpClient.GetStreamAsync(releaseDownloadUrl))
+                        {
+                            await artifactStream.CopyToAsync(fileStream);
+                        }
                     }
 
                     using (var stream = File.OpenRead(releaseZip))
