@@ -66,7 +66,7 @@ namespace RadarrAPI
             services.AddTransient<AppVeyorReleaseSource>();
             services.AddTransient<AzureReleaseSource>();
 
-            services.AddSingleton(new TraktClient(Config.GetSection("Trakt")["ClientId"], Config.GetSection("Trakt")["ClientSecret"]));
+            // services.AddSingleton(new TraktClient(Config.GetSection("Trakt")["ClientId"], Config.GetSection("Trakt")["ClientSecret"]));
             services.AddMvc();
         }
 
