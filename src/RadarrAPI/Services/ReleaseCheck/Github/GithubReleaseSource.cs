@@ -10,6 +10,7 @@ using Microsoft.Extensions.Options;
 using Octokit;
 using RadarrAPI.Database;
 using RadarrAPI.Database.Models;
+using RadarrAPI.Options;
 using RadarrAPI.Util;
 using Branch = RadarrAPI.Update.Branch;
 using OperatingSystem = RadarrAPI.Update.OperatingSystem;
@@ -20,13 +21,13 @@ namespace RadarrAPI.Services.ReleaseCheck.Github
     {
         private readonly DatabaseContext _database;
         
-        private readonly Config _config;
+        private readonly RadarrOptions _config;
 
         private readonly GitHubClient _gitHubClient;
         
         private readonly HttpClient _httpClient;
 
-        public GithubReleaseSource(DatabaseContext database, IOptions<Config> config)
+        public GithubReleaseSource(DatabaseContext database, IOptions<RadarrOptions> config)
         {
             _database = database;
             _config = config.Value;

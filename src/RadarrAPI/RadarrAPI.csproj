@@ -12,11 +12,10 @@
   
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Octokit" Version="0.32.0" />
+    <PackageReference Include="Octokit" Version="0.34.0" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="2.2.0" />
     <PackageReference Include="Sentry.AspNetCore" Version="1.2.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="3.0.0" />
-    <PackageReference Include="TraktApiSharp" Version="1.0.0-alpha2" />
     <!-- These are necessary for deployment on linux. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.2.6" />

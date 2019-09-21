@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using RadarrAPI.Options;
 using RadarrAPI.Services.ReleaseCheck.AppVeyor;
 using RadarrAPI.Services.ReleaseCheck.Github;
 using RadarrAPI.Services.ReleaseCheck.Azure;
@@ -25,7 +26,7 @@ namespace RadarrAPI.Services.ReleaseCheck
 
         private readonly ConcurrentDictionary<Branch, Type> _releaseBranches;
 
-        private readonly Config _config;
+        private readonly RadarrOptions _config;
 
         static ReleaseService()
         {
@@ -39,7 +40,7 @@ namespace RadarrAPI.Services.ReleaseCheck
             IServiceScopeFactory serviceScopeFactory, 
             IHub sentry, 
             ILogger<ReleaseService> logger,
-            IOptions<Config> configOptions)
+            IOptions<RadarrOptions> configOptions)
         {
             _serviceScopeFactory = serviceScopeFactory;
             _sentry = sentry;

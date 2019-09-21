@@ -10,6 +10,7 @@ using RadarrAPI.Services.ReleaseCheck.Azure.Responses;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using RadarrAPI.Options;
 using OperatingSystem = RadarrAPI.Update.OperatingSystem;
 using RadarrAPI.Update;
 
@@ -25,10 +26,10 @@ namespace RadarrAPI.Services.ReleaseCheck.Azure
         private static int? _lastBuildId;
 
         private readonly DatabaseContext _database;
-        private readonly Config _config;
+        private readonly RadarrOptions _config;
         private readonly HttpClient _httpClient;
 
-        public AzureReleaseSource(DatabaseContext database, IHttpClientFactory httpClientFactory, IOptions<Config> config)
+        public AzureReleaseSource(DatabaseContext database, IHttpClientFactory httpClientFactory, IOptions<RadarrOptions> config)
         {
             _database = database;
             _config = config.Value;

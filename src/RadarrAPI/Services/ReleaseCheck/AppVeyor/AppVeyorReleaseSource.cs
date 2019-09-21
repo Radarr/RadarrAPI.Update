@@ -10,6 +10,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RadarrAPI.Database;
 using RadarrAPI.Database.Models;
+using RadarrAPI.Options;
 using RadarrAPI.Services.ReleaseCheck.AppVeyor.Responses;
 using RadarrAPI.Update;
 using OperatingSystem = RadarrAPI.Update.OperatingSystem;
@@ -25,9 +26,9 @@ namespace RadarrAPI.Services.ReleaseCheck.AppVeyor
 
         private readonly DatabaseContext _database;
         private readonly HttpClient _httpClient;
-        private readonly Config _config;
+        private readonly RadarrOptions _config;
         
-        public AppVeyorReleaseSource(DatabaseContext database, IHttpClientFactory httpClientFactory, IOptions<Config> config)
+        public AppVeyorReleaseSource(DatabaseContext database, IHttpClientFactory httpClientFactory, IOptions<RadarrOptions> config)
         {
             _database = database;
             _httpClient = httpClientFactory.CreateClient("AppVeyor");

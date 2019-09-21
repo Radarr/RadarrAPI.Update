@@ -12,13 +12,14 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Octokit;
 using RadarrAPI.Database;
+using RadarrAPI.Options;
 using RadarrAPI.Services.BackgroundTasks;
 using RadarrAPI.Services.ReleaseCheck;
 using RadarrAPI.Services.ReleaseCheck.AppVeyor;
 using RadarrAPI.Services.ReleaseCheck.Github;
 using RadarrAPI.Services.ReleaseCheck.Azure;
+using RadarrAPI.Services.Trakt;
 using Serilog;
-using TraktApiSharp;
 using ProductHeaderValue = Octokit.ProductHeaderValue;
 
 namespace RadarrAPI
@@ -28,26 +29,30 @@ namespace RadarrAPI
         public Startup(IConfiguration configuration, IHostingEnvironment env)
         {
             Config = configuration;
-            ConfigRadarr = Config.GetSection("Radarr").Get<Config>();
+            ConfigRadarr = Config.GetSection("Radarr").Get<RadarrOptions>();
             
             SetupDataDirectory();
         }
 
         public IConfiguration Config { get; }
         
-        public Config ConfigRadarr { get; }
+        public RadarrOptions ConfigRadarr { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<Config>(Config.GetSection("Radarr"));
+            services.Configure<RadarrOptions>(Config.GetSection("Radarr"));
+            services.Configure<TraktOptions>(Config.GetSection("Trakt"));
+            
             services.AddDbContextPool<DatabaseContext>(o => o.UseMySql(ConfigRadarr.Database));
 
             services.AddSingleton(new GitHubClient(new ProductHeaderValue("RadarrAPI")));
-            services.AddHttpClient("AppVeyor")
+            
+            services
+                .AddHttpClient("AppVeyor")
                 .ConfigureHttpClient((serviceProvider, client) =>
                 {
-                    var config = serviceProvider.GetRequiredService<IOptions<Config>>();
+                    var config = serviceProvider.GetRequiredService<IOptions<RadarrOptions>>();
 
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", config.Value.AppVeyorApiKey);
@@ -58,6 +63,18 @@ namespace RadarrAPI
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
                 });
 
+            services
+                .AddHttpClient(nameof(TraktService))
+                .ConfigureHttpClient((serviceProvider, client) =>
+                {
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                })
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    UseCookies = false,
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                });;
+            
             services.AddHostedService<QueuedHostedService>();
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
 
@@ -65,6 +82,7 @@ namespace RadarrAPI
             services.AddTransient<GithubReleaseSource>();
             services.AddTransient<AppVeyorReleaseSource>();
             services.AddTransient<AzureReleaseSource>();
+            services.AddTransient<TraktService>();
 
             // services.AddSingleton(new TraktClient(Config.GetSection("Trakt")["ClientId"], Config.GetSection("Trakt")["ClientSecret"]));
             services.AddMvc();

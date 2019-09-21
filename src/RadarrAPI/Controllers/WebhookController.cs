@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using RadarrAPI.Options;
 using RadarrAPI.Services.BackgroundTasks;
 using RadarrAPI.Services.ReleaseCheck;
 using RadarrAPI.Update;
@@ -12,9 +13,9 @@ namespace RadarrAPI.Controllers
     {
         private readonly IBackgroundTaskQueue _queue;
 
-        private readonly Config _config;
+        private readonly RadarrOptions _config;
 
-        public WebhookController(IBackgroundTaskQueue queue, IOptions<Config> optionsConfig)
+        public WebhookController(IBackgroundTaskQueue queue, IOptions<RadarrOptions> optionsConfig)
         {
             _queue = queue;
             _config = optionsConfig.Value;
